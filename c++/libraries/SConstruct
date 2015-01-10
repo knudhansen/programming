@@ -1,0 +1,83 @@
+import os
+
+env = Environment()
+
+compiler  = Builder(action = 'g++ -c -o $TARGET $SOURCE')
+librarian = Builder(action = 'ar rs $TARGET $SOURCES')
+linker    = Builder(action = 'g++ -o $TARGET $SOURCES')
+
+env.Append(BUILDERS = {'compiler'  : compiler})
+env.Append(BUILDERS = {'librarian' : librarian})
+env.Append(BUILDERS = {'linker'    : linker})
+
+class Library:
+    def __init__(self, name):
+        self._cpp_files = []
+        self._name = name
+
+    def add_cpp_file(self, *files):
+        self._cpp_files.extend(map(lambda x: File(x), files))
+
+    def add_h_file(self, *files):
+        self._h_files.extend(map(lambda x: File(x), files))
+
+    def get_library_file(self):
+        return File(self._name + '.a')
+
+    def get_h_files(self):
+        return self._h_files
+
+    def build(self):
+        object_files = []
+        for cpp_file in self._cpp_files:
+            object_file = File(os.path.splitext(cpp_file.get_abspath())[0] + '.o')
+            env.compiler(object_file, cpp_file)
+            object_files.append(object_file)
+        library = env.librarian(self.get_library_file(), object_files)
+        env.Alias('lib_build', library)
+        return library
+        
+class Program:
+    def __init__(self, name):
+        self._cpp_files = []
+        self._o_files = []
+        self._libraries = []
+        self._name = name
+
+    def add_cpp_file(self, *files):
+        self._cpp_files.extend(map(lambda x: File(x), files))
+
+    def add_o_file(self, *files):
+        self._o_files.extend(map(lambda x: File(x), files))
+
+    def add_library(self, *libraries):
+        self._libraries.extend(libraries)
+
+    def get_executable_file(self):
+        return File(self._name + '.exe')
+
+    def build(self):
+        object_files = self._o_files
+        for cpp_file in self._cpp_files:
+            object_file = File(os.path.splitext(cpp_file.get_abspath())[0] + '.o')
+            env.compiler(object_file, cpp_file)
+            object_files.append(object_file)
+        object_files.extend(map(lambda x: x.get_library_file(), self._libraries))
+        executable = env.linker(self.get_executable_file(), object_files)
+        env.Alias('prg_build', executable)
+        return executable
+
+## library_files = []
+## library_files.extend(env.compiler('math.o','math.cpp'))
+## env.librarian('math.a',library_files)
+
+math_lib = Library('math')
+math_lib.add_cpp_file('math.cpp')
+math_lib.add_cpp_file('math_long.cpp')
+math_lib.build()
+
+math_test_prg = Program('math_test')
+math_test_prg.add_cpp_file('math_test.cpp')
+math_test_prg.add_library(math_lib)
+math_test_prg.build()
+#env.linker('math_test.exe',['math.a','math_test.cpp'])
