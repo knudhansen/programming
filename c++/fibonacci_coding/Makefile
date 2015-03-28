@@ -1,10 +1,13 @@
-all: decoding coding
+all: fib_decoding fib_coding 32bit_coding
 
 clean:
-	rm coding decoding
+	rm fib_coding fib_decoding 32bit_coding
 
-decoding: fibonacci_decoding.cpp
-	g++ fibonacci_decoding.cpp -o decoding
+fib_decoding: fibonacci_decoding.cpp
+	g++ fibonacci_decoding.cpp -o fib_decoding
 
-coding: fibonacci_coding.cpp
-	g++ fibonacci_coding.cpp -o coding
+fib_coding: fibonacci_coding.cpp
+	g++ fibonacci_coding.cpp -o fib_coding
+
+32bit_coding: 32bit_coding.cpp
+	g++ 32bit_coding.cpp -o 32bit_coding

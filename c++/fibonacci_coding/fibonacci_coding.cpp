@@ -14,7 +14,7 @@ int main() {
 
       int argv_int = atoi(s);
 
-      char fibonacci_encoding[1000];
+      char fibonacci_encoding[1024];
       
       int fibonacci_previous = 0;
       int fibonacci_current  = 1;
