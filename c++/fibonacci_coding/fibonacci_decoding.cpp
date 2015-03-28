@@ -4,38 +4,43 @@
 
 int decode(char* fibonacci_sequence, int length);
 
-int main(int argc, char **argv) {
+int main() {
+  char s[1024];
+  int s_length = 0;
 
-  if (argc < 2) {
-    return 1;
-  }
-  if (argc > 2) {
-    return 1;
-  }
+  int c;
+  while(EOF != (c = fgetc(stdin))) {
+    s[s_length] = c;
+    s_length++;
+    if (s[s_length-1] == '1' && s[s_length-2] == '1') {
 
-  char* current_number = argv[1];
-  int current_number_length = 1;
+      s[s_length] = '\0';
 
-  while(current_number[current_number_length-1] != '\0') {
-    do {
-      current_number_length++;
-    } while (current_number[current_number_length-1] != '\0' &&
-	     !(current_number[current_number_length-1] == '1' &&
-	       current_number[current_number_length-2] == '1')
-	     );
-    if (current_number[current_number_length-1] == '\0') {
-      break;
+      char* current_number = s;
+      int current_number_length = 1;
+      
+      while(current_number[current_number_length-1] != '\0') {
+	do {
+	  current_number_length++;
+	} while (current_number[current_number_length-1] != '\0' &&
+		 !(current_number[current_number_length-1] == '1' &&
+		   current_number[current_number_length-2] == '1')
+		 );
+	if (current_number[current_number_length-1] == '\0') {
+	  break;
+	}
+	printf("%d ", decode(current_number, current_number_length));
+	current_number += current_number_length;
+	current_number_length = 1;
+      }
+      
+      printf("\n");
+
+      s_length = 0;
     }
-    printf("%d ", decode(current_number, current_number_length));
-    current_number += current_number_length;
-    current_number_length = 1;
   }
 
-  printf("\n");
-
-//  char* number = argv;
-//
-//  printf("%d\n", decode(argv[1], strlen(argv[1])));
+  return 0;
 }
 
 int decode(char* fibonacci_sequence, int length) {
@@ -52,7 +57,9 @@ int decode(char* fibonacci_sequence, int length) {
     if (fibonacci_sequence[i] == '1') {
       decoded += current;
     }
+    int temp = current;
     current = current + previous;
+    previous = temp;
   }
 
   return decoded;
