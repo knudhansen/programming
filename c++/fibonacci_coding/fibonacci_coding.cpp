@@ -14,29 +14,45 @@ int main() {
 
       int argv_int = atoi(s);
 
-      int fibonacci_sequence[10000];
       char fibonacci_encoding[1000];
       
-      fibonacci_sequence[0] = 0;
-      fibonacci_sequence[1] = 1;
-      int i = 2;
+      int fibonacci_previous = 0;
+      int fibonacci_current  = 1;
+      int fibonacci_index    = 2;
       
       do {
-	fibonacci_sequence[i] = fibonacci_sequence[i-2] + fibonacci_sequence[i-1];
-	i++;
-      } while (argv_int >= fibonacci_sequence[i-1]);
-      i--;
+	int temp = fibonacci_current;
+	fibonacci_current = fibonacci_current + fibonacci_previous;
+	fibonacci_previous = temp;
+	fibonacci_index++;
+      } while (argv_int >= fibonacci_current);
+
+
+      int temp = fibonacci_previous;
+      fibonacci_previous = fibonacci_current - fibonacci_previous;
+      fibonacci_current = temp;
+      fibonacci_index--;
       
-    
-      fibonacci_encoding[i-1] = (char)0;
-      fibonacci_encoding[i-2] = '1';
-      for (int j = i; j > 1; j--) {
-	if (fibonacci_sequence[j] > argv_int && fibonacci_sequence[j-1] <= argv_int) {
+      fibonacci_encoding[fibonacci_index - 1] = (char)0;
+      fibonacci_encoding[fibonacci_index - 2] = '1';
+
+      for (int j = fibonacci_index; j > 1; j--) {
+	if (fibonacci_current <= argv_int) {
+
 	  fibonacci_encoding[j-3] = '1';
-	  argv_int -= fibonacci_sequence[j-1];
+	  argv_int -= fibonacci_current;
+	        
 	} else {
+
 	  fibonacci_encoding[j-3] = '0';
+
 	}
+	
+	int temp = fibonacci_previous;
+	fibonacci_previous = fibonacci_current - fibonacci_previous;
+	fibonacci_current = temp;
+	fibonacci_index--;
+	
       }
     
       printf("%s", fibonacci_encoding);
