@@ -1,0 +1,2 @@
+Program("knud.cpp")
+Program("primes.cpp")
