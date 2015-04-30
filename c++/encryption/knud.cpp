@@ -13,8 +13,6 @@ long powmod(long data, long exponent, long modulus);
 
 int main(int argc, char **argv) {
 
-  printf("Test\n");
-
   long p = 61;
   long q = 53;
 
@@ -22,9 +20,25 @@ int main(int argc, char **argv) {
 
   long phi_n = phi(p,q);
 
-  printf("%ld\n", phi_n);
+  long e;
 
-  long e = 17;
+  for (e = 2; e < phi_n; e++) {
+    bool found = true;
+    for (long j = 2; j < phi_n; j++) {
+      if (e%j == 0 && phi_n%j == 0) {
+	found = false;
+	break;
+      }
+    }
+
+    if (found) {
+      break;
+    }
+  }
+
+  printf("found e = %ld\n", e);
+
+  //  long e = 17;
 
   /*
     finding d
@@ -34,7 +48,15 @@ int main(int argc, char **argv) {
     5> 5*5 % 8 = 25 % 8 = 1
    */
 
-  long d = 2753;
+  long d = 2;
+
+  while ( ((d * e) % phi_n) != 1 ) {
+    d++;
+  }
+
+  printf("found d = %ld\n", d);
+
+  //  long d = 2753;
 
   key_t publickey;
   publickey.modulus = n;
@@ -45,13 +67,19 @@ int main(int argc, char **argv) {
   privatekey.exponent = d;
 
   for (long i = 0; i < n; i++) {
-    long encoded = encode(i, &publickey);
-    long decoded = decode(encoded, &privatekey);
-    printf("data> %8ld  |  encoded> %8ld  |  decoded> %8ld\n", i, encoded, decoded);
-  }
+    long encoded;
+    long decoded;
 
-  printf("powmod(%ld,%ld,%ld) = %ld\n", 4L, 13L, 497L, powmod(4L, 13L, 497L));
-  printf("powmod(%ld,%ld,%ld) = %ld\n", 65L, 17L, 3233L, powmod(65L, 17L, 3233L));
+    encoded = encode(i, &publickey);
+    decoded = decode(encoded, &privatekey);
+    printf("data> %8ld  |  encoded> %8ld  |  decoded> %8ld\n", i, encoded, decoded);
+    if (decoded != i) return -1;
+
+    encoded = encode(i, &privatekey);
+    decoded = decode(encoded, &publickey);
+    printf("data> %8ld  |  encoded> %8ld  |  decoded> %8ld\n", i, encoded, decoded);
+    if (decoded != i) return -1;
+  }
 
 }
 
