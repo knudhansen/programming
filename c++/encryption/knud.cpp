@@ -38,16 +38,6 @@ int main(int argc, char **argv) {
 
   printf("found e = %ld\n", e);
 
-  //  long e = 17;
-
-  /*
-    finding d
-    2> 2*5 % 8 = 10 % 8 = 2
-    3> 3*5 % 8 = 15 % 8 = 7
-    4> 4*5 % 8 = 20 % 8 = 4
-    5> 5*5 % 8 = 25 % 8 = 1
-   */
-
   long d = 2;
 
   while ( ((d * e) % phi_n) != 1 ) {
@@ -55,8 +45,6 @@ int main(int argc, char **argv) {
   }
 
   printf("found d = %ld\n", d);
-
-  //  long d = 2753;
 
   key_t publickey;
   publickey.modulus = n;
