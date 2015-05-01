@@ -30,8 +30,4 @@ int main(int argc, char **argv) {
 
   bnb.print();
 
-  unsigned long a = 0xffffffffL * 0xffffffffL;
-
-  printf("%lx\n",a);
-
 }
