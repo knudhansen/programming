@@ -1,4 +1,2 @@
-Program("bigmult.cpp")
-
 BigNumber = Object("BigNumber.cpp")
 Program(["bigNumberTest.cpp"] + BigNumber)

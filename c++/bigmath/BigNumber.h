@@ -4,17 +4,19 @@
 class BigNumber {
 
  private:
-  char* number;
+  int  length;
+  int* number;
 
  public:
   BigNumber();
   BigNumber(char* number);
 
-  BigNumber add(BigNumber& b);
   void operator=(BigNumber& a);
   BigNumber operator+(BigNumber& b);
 
   void print();
 };
+
+long xatoi(char* number);
 
 #endif
