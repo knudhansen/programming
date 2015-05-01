@@ -57,7 +57,7 @@ BigNumber BigNumber::operator+(BigNumber& b)
   // computing the sum. Ripple carry.
   long temp_sum = 0;
   for (int i = 0; i < sum.length; i++) {
-    long remainder = (temp_sum & 0xffffffff00000000L) >> NUMBER_OF_BITS_IN_INT;
+    const long remainder = (temp_sum & 0xffffffff00000000L) >> NUMBER_OF_BITS_IN_INT;
     temp_sum = 0;
     temp_sum += i >= this->length ? 0 : this->number[i];
     temp_sum += i >= b.length ? 0 : b.number[i];
@@ -106,12 +106,29 @@ BigNumber BigNumber::operator*(BigNumber& b)
 
 }
 
-void BigNumber::operator=(BigNumber& a)
+void BigNumber::operator=(BigNumber& b)
 {
   free(this->number);
-  this->number = (unsigned int*) malloc (a.length * sizeof(int));
-  memcpy(this->number, a.number, a.length * sizeof(int));
-  this->length = a.length;
+  this->number = (unsigned int*) malloc (b.length * sizeof(int));
+  memcpy(this->number, b.number, b.length * sizeof(int));
+  this->length = b.length;
+}
+
+bool BigNumber::operator==(BigNumber& b)
+{
+  for (int i = 0; i < (this->length > b.length ? this->length : b.length); i++) {
+    const int anumber = i >= this->length ? 0 : this->number[i];
+    const int bnumber = i >= b.length ? 0 : b.number[i];
+    if (anumber != bnumber) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool BigNumber::operator!=(BigNumber& b)
+{
+  return !(*this == b);
 }
 
 void BigNumber::print()
@@ -137,15 +154,18 @@ long xatoi(char* number)
 
   for (int i=0; i < strlen(number); i++) {
     int digit;
-    if ( (number[i] & 0x30) == 0x30) {
-      // printf("dec digit\n");
+    if ( (number[i] & 0xf0) == 0x30) {
       digit = number[i] & 0x0f;
-    } else if ( (number[i] & 0x40) == 0x40 || (number[i] & 0x60) == 0x60) {
-      // printf("hex digit\n");
+      if (digit > 9) {
+	throw number;
+      }
+    } else if ( (number[i] & 0xf0) == 0x40 || (number[i] & 0xf0) == 0x60) {
       digit = (number[i] & 0x0f) + 9;
+      if (digit < 10 || digit > 15) {
+	throw number;
+      }
     } else {
-      // printf("illegal digit\n");
-      digit = 0;
+      throw number;
     }
     
     l += pow(16,strlen(number)-1-i) * digit;

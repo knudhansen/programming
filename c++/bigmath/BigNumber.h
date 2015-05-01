@@ -14,6 +14,8 @@ class BigNumber {
   void operator=(BigNumber& a);
   BigNumber operator+(BigNumber& b);
   BigNumber operator*(BigNumber& b);
+  bool operator==(BigNumber& b);
+  bool operator!=(BigNumber& b);
 
   void print();
 };
