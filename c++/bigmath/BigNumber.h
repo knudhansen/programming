@@ -4,8 +4,8 @@
 class BigNumber {
 
  private:
-  int  length;
-  int* number;
+  unsigned int  length;
+  unsigned int* number;
 
  public:
   BigNumber();
@@ -13,6 +13,7 @@ class BigNumber {
 
   void operator=(BigNumber& a);
   BigNumber operator+(BigNumber& b);
+  BigNumber operator*(BigNumber& b);
 
   void print();
 };
