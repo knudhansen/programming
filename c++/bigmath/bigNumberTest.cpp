@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 #define ASSERT(x) assert(x, __FILE__, __LINE__);
 
@@ -10,6 +11,11 @@ void assert(const bool condition, const char* file, const int line);
 
 int main(int argc, char **argv)
 {
+
+  unsigned int seed = time(NULL);
+  srand(seed);
+  
+  printf("test seed = %08x\n\n", seed);
 
   /* 0-length numbers. */
   
@@ -127,11 +133,27 @@ int main(int argc, char **argv)
 
   ASSERT(bn2_d == bn1_sum_dd);
 
+  BigNumber bn2_e = BigNumber("ffffffffffffffff");
+
+  BigNumber bn2_sum_ee = bn2_e + bn2_e;
+
+  BigNumber bn3_a = BigNumber("1fffffffffffffffe");
+
+  ASSERT(bn2_sum_ee == bn3_a);
+
   printf("...done\n\n");
 
 
 
   /* long numbers. */
+
+  printf("testing long numbers...\n");
+
+  printf("%d\n", rand());
+
+  printf("...done\n\n");
+
+
 
 
   BigNumber bn1 = BigNumber("123456");
