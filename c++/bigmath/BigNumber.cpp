@@ -9,15 +9,17 @@
 #define NUMBER_OF_BITS_IN_INT 32
 #define NUMBER_OF_DIGITS_IN_INT (NUMBER_OF_BITS_IN_INT / 4)
 
-BigNumber::BigNumber()
+BigNumber::BigNumber(void)
 {
 }
 
 BigNumber::BigNumber(char *number)
 {
 
+  // determining number of integegers in number
   int numberOfIntegersInNumber = strlen(number) / NUMBER_OF_DIGITS_IN_INT;
   if (strlen(number) % NUMBER_OF_DIGITS_IN_INT > 0) {
+    // unless number is exactly fits in a number of int, we have to increment the number of ints to have the reminder
     numberOfIntegersInNumber++;
   }
   this->number = (unsigned int*) malloc (numberOfIntegersInNumber * sizeof(int));
@@ -46,6 +48,7 @@ BigNumber::BigNumber(char *number)
 
 BigNumber BigNumber::operator+(BigNumber& b)
 {
+  #warning "is this legal to return a local variable?"
   BigNumber sum;
 
   // worst case, the sum is one larger than the largest operand.
@@ -75,6 +78,7 @@ BigNumber BigNumber::operator+(BigNumber& b)
 
 BigNumber BigNumber::operator*(BigNumber& b)
 {
+  #warning "is this legal to return a local variable?"
   BigNumber product;
 
   // worst case, the product has the sum of the operands integers.
@@ -93,7 +97,7 @@ BigNumber BigNumber::operator*(BigNumber& b)
     }
   }
 
-  // in case there as no carry for the MSI (most significant int) reducing the length.
+  // in case there as no carryxs for the MSI (most significant int) reducing the length.
   for (int i = product.length-1; i>= (this->length > b.length? this->length : b.length); i--) {
     if (product.number[i] == 0) {
       product.length--;
@@ -105,6 +109,14 @@ BigNumber BigNumber::operator*(BigNumber& b)
   return product;
 
 }
+
+//BigNumber BigNumber::operator/(BigNumber& b)
+//{
+//}
+//
+//BigNumber BigNumber::operator%(BigNumber& b)
+//{
+//}
 
 void BigNumber::operator=(BigNumber& b)
 {
@@ -131,7 +143,11 @@ bool BigNumber::operator!=(BigNumber& b)
   return !(*this == b);
 }
 
-void BigNumber::print()
+bool BigNumber::isPrime(void) {
+  return false;
+}
+
+void BigNumber::print(void)
 {
   for (int i = this->length-1; i >= 0; i--) {
     if (i == this->length-1) {      
@@ -173,3 +189,5 @@ long xatoi(char* number)
   return l;
 
 }
+
+#warning "Figure out what the difference is between the declaration of an object, new and malloc."
