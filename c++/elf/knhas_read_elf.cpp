@@ -91,6 +91,7 @@ public:
   int getByteSize(void);
   int getShnum(void);
   int getShoff(void);
+  int getShstrndx(void);
   elfClass_t getClass(void);
 };
 
@@ -124,9 +125,22 @@ private:
   } elfSectionHeader;
   ElfHeader *elfHeader;
 public:
-  ElfSectionHeader();
+  ElfSectionHeader(void);
   void constructFromFile(FILE* file, ElfHeader* elfHeader);
   uint32_t getType(void);
+  long getShoffset(void);
+  long getShsize(void);
+  int getShname(void);
+  void print(void);
+};
+
+class ElfSection {
+private:
+  ElfSectionHeader *elfSectionHeader;
+  char *name;
+public:
+  ElfSection(ElfSectionHeader* elfSectionHeader, char* sectionNameStringTable);
+  void constructFromFile(FILE* file, ElfSectionHeader* elfSectionHeader);
   void print(void);
 };
 
@@ -140,16 +154,30 @@ int main() {
   elfHeader->constructFromFile(elfFile);
   elfHeader->print();
   
-  // read elf sections
+  // read elf section headers
   ElfSectionHeader **elfSectionHeaders = (ElfSectionHeader**)malloc(sizeof(ElfSectionHeader*) * elfHeader->getShnum());
   fseek(elfFile, elfHeader->getShoff(), SEEK_SET);
   for (int shNdx = 0; shNdx < elfHeader->getShnum(); shNdx++) {
-    printf("constructing section header %d\n", shNdx);
+    printf("constructing section header %2d >>> ", shNdx);
     elfSectionHeaders[shNdx] = new ElfSectionHeader();
     elfSectionHeaders[shNdx]->constructFromFile(elfFile, elfHeader);
     elfSectionHeaders[shNdx]->print();
   }
-  
+
+  // reading the section name string table
+  ElfSectionHeader *nameStringTableSectionHeader;
+  nameStringTableSectionHeader = elfSectionHeaders[elfHeader->getShstrndx()];
+  fseek(elfFile, nameStringTableSectionHeader->getShoffset(), SEEK_SET);
+  char* sectionNameStringTable = (char*)malloc(nameStringTableSectionHeader->getShsize()  * sizeof(char));
+  fread(sectionNameStringTable, sizeof(char), nameStringTableSectionHeader->getShsize(), elfFile);
+
+  // creating sections
+  ElfSection **elfSections = (ElfSection**)malloc(sizeof(ElfSection*) * elfHeader->getShnum());
+  for (int shNdx = 0; shNdx < elfHeader->getShnum(); shNdx++) {
+    elfSections[shNdx] = new ElfSection(elfSectionHeaders[shNdx], sectionNameStringTable);
+    elfSections[shNdx]->print();
+  }
+
   fclose(elfFile);
   
 }
@@ -215,6 +243,22 @@ int ElfHeader::getShoff(void) {
     break;
   }
   return -1;
+}
+
+int ElfHeader::getShstrndx(void) {
+  switch (this->elfIdentity->getClass()) {
+  case ELFCLASSNONE:
+    printf("class none illegal\n");
+    break;
+  case ELFCLASS32:
+    return this->elfheader2.elf32.e_shstrndx;
+  case ELFCLASS64:
+    return this->elfheader2.elf64.e_shstrndx;
+  default:
+    printf("unknown class\n");
+    break;
+  }
+  return -1;  
 }
 
 void ElfHeader::print(void) {
@@ -300,7 +344,52 @@ uint32_t ElfSectionHeader::getType(void) {
   case ELFCLASS64:
     return this->elfSectionHeader.elf64.sh_type;
   default:
-    printf("constructFromFile unknown class -- %d\n", this->elfHeader->getClass());
+    printf("unknown class -- %d\n", this->elfHeader->getClass());
+  }
+  return 0;
+}
+
+long ElfSectionHeader::getShoffset(void) {
+  switch (this->elfHeader->getClass()) {
+  case ELFCLASSNONE:
+    printf("class none illegal\n");
+    break;
+  case ELFCLASS32:
+    return this->elfSectionHeader.elf32.sh_offset;
+  case ELFCLASS64:
+    return this->elfSectionHeader.elf64.sh_offset;
+  default:
+    printf("unknown class -- %d\n", this->elfHeader->getClass());
+  }
+  return 0;
+}
+ 
+long ElfSectionHeader::getShsize(void) {
+  switch (this->elfHeader->getClass()) {
+  case ELFCLASSNONE:
+    printf("class none illegal\n");
+    break;
+  case ELFCLASS32:
+    return this->elfSectionHeader.elf32.sh_size;
+  case ELFCLASS64:
+    return this->elfSectionHeader.elf64.sh_size;
+  default:
+    printf("unknown class -- %d\n", this->elfHeader->getClass());
+  }
+  return 0;
+}
+
+int ElfSectionHeader::getShname(void) {
+  switch (this->elfHeader->getClass()) {
+  case ELFCLASSNONE:
+    printf("class none illegal\n");
+    break;
+  case ELFCLASS32:
+    return this->elfSectionHeader.elf32.sh_name;
+  case ELFCLASS64:
+    return this->elfSectionHeader.elf64.sh_name;
+  default:
+    printf("unknown class -- %d\n", this->elfHeader->getClass());
   }
   return 0;
 }
@@ -311,24 +400,38 @@ void ElfSectionHeader::print(void) {
     printf("class none illegal\n");
     break;
   case ELFCLASS32:
-    printf("sh_name: %4d - sh_type: %4d - sh_addr: %4d - sh_offset: %4d - sh_size: %4d\n",
+    printf("sh_name: %4d - sh_type: %4d - sh_addr: %4d - sh_offset: %4d - sh_size: %4d - sh_addralign: %4d\n",
 	   this->elfSectionHeader.elf32.sh_name,
 	   this->elfSectionHeader.elf32.sh_type,
 	   this->elfSectionHeader.elf32.sh_addr,
 	   this->elfSectionHeader.elf32.sh_offset,
-	   this->elfSectionHeader.elf32.sh_size
+	   this->elfSectionHeader.elf32.sh_size,
+	   this->elfSectionHeader.elf32.sh_addralign
 	   );
     break;
   case ELFCLASS64:
-    printf("sh_name: %4d - sh_type: %4d - sh_addr: %4ld - sh_offset: %4ld - sh_size: %4ld\n",
+    printf("sh_name: %4d - sh_type: %4d - sh_addr: %4ld - sh_offset: %4ld - sh_size: %4ld - sh_addralign: %4ld\n",
 	   this->elfSectionHeader.elf64.sh_name,
 	   this->elfSectionHeader.elf64.sh_type,
 	   this->elfSectionHeader.elf64.sh_addr,
 	   this->elfSectionHeader.elf64.sh_offset,
-	   this->elfSectionHeader.elf64.sh_size
+	   this->elfSectionHeader.elf64.sh_size,
+	   this->elfSectionHeader.elf64.sh_addralign
 	   );
     break;
   default:
     printf("constructFromFile unknown class -- %d\n", this->elfHeader->getClass());
   }  
+}
+
+ElfSection::ElfSection(ElfSectionHeader* elfSectionHeader, char* sectionNameStringTable) {
+  this->elfSectionHeader = elfSectionHeader;
+  this->name = &(sectionNameStringTable[this->elfSectionHeader->getShname()]);
+}
+
+void ElfSection::constructFromFile(FILE* file, ElfSectionHeader* elfSectionHeader) {
+}
+
+void ElfSection::print(void) {
+  printf("section -- name:%s\n", this->name);
 }
