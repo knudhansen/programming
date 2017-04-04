@@ -175,6 +175,7 @@ int main() {
   ElfSection **elfSections = (ElfSection**)malloc(sizeof(ElfSection*) * elfHeader->getShnum());
   for (int shNdx = 0; shNdx < elfHeader->getShnum(); shNdx++) {
     elfSections[shNdx] = new ElfSection(elfSectionHeaders[shNdx], sectionNameStringTable);
+    printf("%3d >>> ", shNdx);
     elfSections[shNdx]->print();
   }
 
