@@ -38,7 +38,8 @@ typedef enum {
 } elfData_t;
 
 typedef enum {
-  SHT_SYMTAB = 2
+  SHT_SYMTAB = 2,
+  SHT_STRTAB = 3
 } shType_t;
 
 class ElfIdentity {
@@ -146,6 +147,9 @@ private:
 public:
   ElfSection(ElfSectionHeader* elfSectionHeader, char* sectionNameStringTable);
   void constructFromFile(FILE* file);
+  char* getName(void);
+  long getShoffset(void);
+  long getShsize(void);
   void print(void);
 };
 
@@ -172,10 +176,11 @@ private:
     elf64SymbolTableEntry_t elf64;
   } elfSymbolTableEntry;
   ElfSectionHeader *elfSectionHeader;
+  char *name;
 public:
   ElfSymbol(ElfSectionHeader* elfSectionHeader);
   static size_t getSymbolTableEntrySize(elfClass_t elfClass);
-  void constructFromFile(FILE* file);
+  void constructFromFile(FILE* file, char* stringTable);
   void print(void);
 };
 
@@ -210,7 +215,7 @@ int main() {
   // reading the section name string table
   nameStringTableSectionHeader = elfSectionHeaders[elfHeader->getShstrndx()];
   fseek(elfFile, nameStringTableSectionHeader->getShoffset(), SEEK_SET);
-  char* sectionNameStringTable = (char*)malloc(nameStringTableSectionHeader->getShsize()  * sizeof(char));
+  char* sectionNameStringTable = (char*)malloc(nameStringTableSectionHeader->getShsize() * sizeof(char));
   fread(sectionNameStringTable, sizeof(char), nameStringTableSectionHeader->getShsize(), elfFile);
 
   // creating sections
@@ -222,6 +227,17 @@ int main() {
   }
 
   
+  // reading the string table
+  char *stringTable = NULL;
+  for (int sNdx=0; sNdx < elfHeader->getShnum(); sNdx++) {
+    if (strcmp(elfSections[sNdx]->getName(), ".strtab") == 0) {
+      printf("found section header of string table: %d\n", sNdx);
+      fseek(elfFile, elfSections[sNdx]->getShoffset(), SEEK_SET);
+      stringTable = (char*)malloc(elfSections[sNdx]->getShsize() * sizeof(char));
+      fread(stringTable, sizeof(char), elfSections[sNdx]->getShsize(), elfFile);
+    }
+  }
+
   // reading symbol table
   int numberOfSymbols = symbolTableSectionHeader->getShsize()/ElfSymbol::getSymbolTableEntrySize(elfHeader->getClass());
   printf("There are %d symbols in the symbol table\n", numberOfSymbols);
@@ -230,7 +246,7 @@ int main() {
   fseek(elfFile, symbolTableSectionHeader->getShoffset(), SEEK_SET);
   for (int i = 0; i < numberOfSymbols; i++) {
     symbolTable[i] = new ElfSymbol(symbolTableSectionHeader);
-    symbolTable[i]->constructFromFile(elfFile);
+    symbolTable[i]->constructFromFile(elfFile, stringTable);
     symbolTable[i]->print();
   }
 
@@ -491,12 +507,25 @@ ElfSection::ElfSection(ElfSectionHeader* elfSectionHeader, char* sectionNameStri
 void ElfSection::constructFromFile(FILE* file) {
 }
 
+char* ElfSection::getName(void) {
+  return this->name;
+}
+
+long ElfSection::getShoffset(void) {
+  return this->elfSectionHeader->getShoffset();
+}
+
+long ElfSection::getShsize(void) {
+  return this->elfSectionHeader->getShsize();
+}
+
 void ElfSection::print(void) {
   printf("section -- name:%s\n", this->name);
 }
 
 ElfSymbol::ElfSymbol(ElfSectionHeader* elfSectionHeader) {
   this->elfSectionHeader = elfSectionHeader;
+  this->name = NULL;
 }
 
 size_t ElfSymbol::getSymbolTableEntrySize(elfClass_t elfClass) {
@@ -516,16 +545,18 @@ size_t ElfSymbol::getSymbolTableEntrySize(elfClass_t elfClass) {
   return 0;
 }
 
-void ElfSymbol::constructFromFile(FILE* file) {
+void ElfSymbol::constructFromFile(FILE* file, char* stringTable) {
   switch (this->elfSectionHeader->getElfClass()) {
   case ELFCLASSNONE:
     printf("class none illegal\n");
     break;
   case ELFCLASS32:
     fread(&(this->elfSymbolTableEntry.elf32), 1, sizeof(this->elfSymbolTableEntry.elf32), file);
+    this->name = &(stringTable[this->elfSymbolTableEntry.elf32.st_name]);
     break;
   case ELFCLASS64:
     fread(&(this->elfSymbolTableEntry.elf64), 1, sizeof(this->elfSymbolTableEntry.elf64), file);
+    this->name = &(stringTable[this->elfSymbolTableEntry.elf64.st_name]);
     break;
   default:
     printf("constructFromFile unknown class -- %d\n", this->elfSectionHeader->getElfClass());
@@ -538,10 +569,10 @@ void ElfSymbol::print(void) {
     printf("class none illegal\n");
     break;
   case ELFCLASS32:
-    printf("Symbol>> name: %d -- type: %d\n", this->elfSymbolTableEntry.elf32.st_name, this->elfSymbolTableEntry.elf32.st_info & 0xf);
+    printf("Symbol>> name: %s(%d) -- type: %d\n", this->name, this->elfSymbolTableEntry.elf32.st_name, this->elfSymbolTableEntry.elf32.st_info & 0xf);
     break;
   case ELFCLASS64:
-    printf("Symbol>> name: %d -- type: %d\n", this->elfSymbolTableEntry.elf64.st_name, this->elfSymbolTableEntry.elf64.st_info & 0xf);
+    printf("Symbol>> name: %s(%d) -- type: %d\n", this->name, this->elfSymbolTableEntry.elf64.st_name, this->elfSymbolTableEntry.elf64.st_info & 0xf);
     break;
   default:
     printf("constructFromFile unknown class -- %d\n", this->elfSectionHeader->getElfClass());
