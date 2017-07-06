@@ -1,0 +1,8 @@
+env = Environment()
+
+VariantDir('build', 'src', duplicate=0)
+
+instruction = env.Object('build/instruction.cpp')
+tape        = env.Object('build/tape.cpp')
+
+env.Program(['build/test.cpp'] + instruction + tape)
