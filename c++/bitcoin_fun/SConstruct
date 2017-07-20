@@ -1,0 +1,12 @@
+env = Environment()
+
+env.Append(CPPPATH = ['tinycrypt/lib/include',
+                      'utilities',
+                     ])
+
+tc_utils  = env.Object('tinycrypt/lib/source/utils.c')
+tc_sha256 = env.Object('tinycrypt/lib/source/sha256.c')
+
+utilities = env.Object('utilities/utilities.c')
+
+pow = env.Program(['pow/pow.c'] + tc_sha256 + tc_utils + utilities)
