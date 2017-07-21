@@ -80,7 +80,7 @@ static int initializeNvram(uint8_t *nvram, const char *filePath) {
     ssize_t read;
     char *line = (char*)malloc((NUMBER_OF_CHAR_PER_BYTE + 1) * sizeof(char));
     size_t len = 0;
-    while (read = getline(&line, &len, nvramContent) != -1) {
+    while ((read = getline(&line, &len, nvramContent)) != -1) {
 
         /** check if the line is a comment **/
         if (strncmp(line, "//", 2) == 0) {
