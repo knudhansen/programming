@@ -14,6 +14,13 @@
 
 uint8_t nvram[512*1024];
 
+//typedef struct nvram_struct {
+//    uint8_t **sectorData;
+//    int sectorByteSize;
+//    int sectorCount;
+//    uint8_t eraseValue;
+//} nvram_t; 
+
 typedef enum partitionType_enum {
     BOOT_PARTITION,
     NONBOOT_PARTITION
@@ -44,6 +51,8 @@ typedef struct partitionHeader_struct {
 } partitionHeader_t;
 
 
+static int boot(uint8_t *nvram);
+
 static int initializeNvram(uint8_t *nvram, const char *filePath);
 static int readMagicWord(uint8_t **nvramPtr);
 static int readPartitionTableHeader(partitionTableHeader_t *partitionTableHeader, uint8_t **nvramPtr);
@@ -61,41 +70,60 @@ static uint32_t computeCrc32(const uint8_t *ptr, int byteLength);
 
 
 int main(int argc, char *argv[]) {
-    int i;
+    printf("booting from all zeroes\n");
+    boot(nvram);
 
+    printf("booting from all ones\n");
+    memset(nvram, 1, sizeof(nvram));
+    boot(nvram);
+
+    printf("booting from nvram image with 2 valid boot partitions\n");
     if (initializeNvram(nvram, argv[1]) != SUCCESS) {
 	printf("Error: could not open file %s!\n", argv[1]);
 	return -1;
-    }    
-    
+    }        
+    boot(nvram);
+
+//    printf("booting from nvram image with 2 valid boot partitions, the first of which gets erased\n");
+//    if (initializeNvram(nvram, argv[1]) != SUCCESS) {
+//	printf("Error: could not open file %s!\n", argv[1]);
+//	return -1;
+//    }        
+//    eraseSector(nvram, 1, 0xff);
+//    boot(nvram);
+}
+
+static int boot(uint8_t *nvram) {
+    int i;
+
     uint8_t *nvramReadPtr;
     nvramReadPtr = nvram;
-    
+
     if (readMagicWord(&nvramReadPtr) != SUCCESS) {
-        printf("Error: magic word mismatch\n");
+        printf("    Error: magic word mismatch\n");
         return -1;
     }
     
     partitionTableHeader_t partitionTableHeader;
     if (readPartitionTableHeader(&partitionTableHeader, &nvramReadPtr) != SUCCESS) {
-        printf("Error reading the partition table header\n");
+        printf("    Error reading the partition table header\n");
         return -1;
     }
-    printPartitionTableHeader(&partitionTableHeader);
+    //    printPartitionTableHeader(&partitionTableHeader);
 
     nvramReadPtr = &(nvram[partitionTableHeader.firstPartitionHeaderAddress]);
     for (i = 0; ; i++) {
         partitionHeader_t partitionHeader;
         if (isEndOfPartitionTable(&partitionHeader)) {
-            printf("partition %2d: reached end of partition table... No boot partition found\n", i);
+            printf("    partition %2d: reached end of partition table... No boot partition found\n", i);
             return -1;
         } else if (readPartitionHeader(&partitionHeader, nvramReadPtr) != SUCCESS) {
-            printf("partition %2d: Wrong header in CRC\n", i);
+            printf("    partition %2d: Wrong header in CRC\n", i);
         } else if (isBootPartition(&partitionHeader)) {
-            printf("partition %2d: found boot partition... Booting from it\n", i);
+            printf("    partition %2d: found boot partition... Booting from it\n", i);
             break;
         } else {
-            printf("partition %2d: unknown partition type\n", i);
+            printf("    partition %2d: unknown partition type\n", i);
         }
         nvramReadPtr += partitionTableHeader.partitionHeaderSize;
     }
@@ -134,7 +162,7 @@ static int initializeNvram(uint8_t *nvram, const char *filePath) {
 }
 
 static int readMagicWord(uint8_t **nvramPtr) {
-    printf("%20s: %s\n","Magic Word", getUint8ArrayHexString(*nvramPtr, NVRAM_BYTE_COUNT_MAGIC_WORD));
+    //    printf("%20s: %s\n","Magic Word", getUint8ArrayHexString(*nvramPtr, NVRAM_BYTE_COUNT_MAGIC_WORD));
     bool magicWordMatch = ((*nvramPtr)[0] == 0xfe) && ((*nvramPtr)[1] == 0xde) && ((*nvramPtr)[2] == 0xbe) && ((*nvramPtr)[3] == 0xda);
     (*nvramPtr) += NVRAM_BYTE_COUNT_MAGIC_WORD;
     return magicWordMatch?SUCCESS:FAILURE;
@@ -259,4 +287,3 @@ static uint32_t computeCrc32(const uint8_t *ptr, int byteLength) {
     }
     return crc;
 }
-
