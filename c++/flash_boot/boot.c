@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) {
     writeNvramFromFile(&nvram, 0, "nvram.image", 2564);
     boot(&nvram);
 
+    printf("booting from nvram.image where 0st sector was erased\n");
     eraseSectorNvram(&nvram, 1);
     boot(&nvram);
 }
