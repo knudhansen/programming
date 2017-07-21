@@ -86,11 +86,10 @@ int main(int argc, char *argv[]) {
 
     printf("booting from nvram.image\n");
     writeNvramFromFile(&nvram, 0, "nvram.image", 2564);
-    printNvram(&nvram);
     boot(&nvram);
 
-//    eraseSectorNvram(&nvram, 1);
-//    boot(&nvram);
+    eraseSectorNvram(&nvram, 1);
+    boot(&nvram);
 }
 
 static int boot(nvram_t *nvram) {
@@ -154,12 +153,6 @@ static int readPartitionTableHeader(nvram_t *nvram, partitionTableHeader_t *part
     partitionTableHeader->crc = getUint8ArrayUint32(ptr);
     ptr += 4;
 
-    printf("%20s: %08x\n", "revision", partitionTableHeader->revision);
-    printf("%20s: %08x\n", "revision", partitionTableHeader->firstPartitionHeaderAddress);
-    printf("%20s: %08x\n", "PH size", partitionTableHeader->partitionHeaderSize);
-    printf("%20s: %08x\n", "crc", partitionTableHeader->crc);
-    printf("%20s: %08x\n", "computedCrc", computedCrc);
-
     address += sizeof(partitionTableHeaderRead);
 
     if (computedCrc == partitionTableHeader->crc) {
@@ -189,7 +182,6 @@ static int readPartitionHeader(nvram_t *nvram, partitionHeader_t *partitionHeade
     ptr += sizeof(partitionHeader->name);
     partitionHeader->crc = getUint8ArrayUint32(ptr);
     ptr += sizeof(partitionHeader->crc);
-    printf("computedCrc(%08x) ?= partitionHeader->crc(%08x)\n",computedCrc,partitionHeader->crc);
     if (computedCrc == partitionHeader->crc) {
         return SUCCESS;
     } else {
