@@ -12,14 +12,12 @@
 #define NVRAM_BYTE_COUNT_MAGIC_WORD 4
 #define PARTITION_TABLE_HEADER_BYTE_SIZE 
 
-uint8_t nvram[512*1024];
-
-//typedef struct nvram_struct {
-//    uint8_t **sectorData;
-//    int sectorByteSize;
-//    int sectorCount;
-//    uint8_t eraseValue;
-//} nvram_t; 
+typedef struct nvram_struct {
+    uint8_t **sectorData;
+    int sectorByteSize;
+    int sectorCount;
+    uint8_t eraseValue;
+} nvram_t; 
 
 typedef enum partitionType_enum {
     BOOT_PARTITION,
@@ -50,13 +48,19 @@ typedef struct partitionHeader_struct {
     uint32_t crc;
 } partitionHeader_t;
 
-
-static int boot(uint8_t *nvram);
+static void createNvram(nvram_t *nvram, int sectorByteSize, int sectorCount, uint8_t eraseValue);
+static void printNvram(nvram_t *nvram);
+static void readNvram(const nvram_t *nvram, uint32_t address, uint8_t *data, int size);
+static void writeNvram(nvram_t *nvram, uint32_t address, const uint8_t *data, int size);
+static int writeNvramFromFile(nvram_t *nvram, uint32_t address, const char *filePath, int size);
+static void eraseSectorNvram(nvram_t *nvram, int sectorIndex);
+ 
+static int boot(nvram_t *nvram);
 
 static int initializeNvram(uint8_t *nvram, const char *filePath);
-static int readMagicWord(uint8_t **nvramPtr);
-static int readPartitionTableHeader(partitionTableHeader_t *partitionTableHeader, uint8_t **nvramPtr);
-static int readPartitionHeader(partitionHeader_t *partitionHeader, uint8_t *nvramPtr);
+static int readMagicWord(nvram_t *nvram, uint32_t *address);
+static int readPartitionTableHeader(nvram_t *nvram, partitionTableHeader_t *partitionTableHeader, uint32_t *address);
+static int readPartitionHeader(nvram_t *nvram, partitionHeader_t *partitionHeader, uint32_t *address);
 static bool isBootPartition(partitionHeader_t *partitionHeader);
 static bool isEndOfPartitionTable(partitionHeader_t *partitionHeader);
 static void printPartitionTableHeader(partitionTableHeader_t *partitionTableHeader);
@@ -70,54 +74,49 @@ static uint32_t computeCrc32(const uint8_t *ptr, int byteLength);
 
 
 int main(int argc, char *argv[]) {
-    printf("booting from all zeroes\n");
-    boot(nvram);
+    int i;
+    nvram_t nvram;
+    createNvram(&nvram, 512, 10, 0xff);
+    for (i = 0; i < nvram.sectorCount; i++) {
+        eraseSectorNvram(&nvram, i);
+    }
+    
+    printf("booting from erased nvram\n");
+    boot(&nvram);
 
-    printf("booting from all ones\n");
-    memset(nvram, 1, sizeof(nvram));
-    boot(nvram);
+    printf("booting from nvram.image\n");
+    writeNvramFromFile(&nvram, 0, "nvram.image", 2564);
+    printNvram(&nvram);
+    boot(&nvram);
 
-    printf("booting from nvram image with 2 valid boot partitions\n");
-    if (initializeNvram(nvram, argv[1]) != SUCCESS) {
-	printf("Error: could not open file %s!\n", argv[1]);
-	return -1;
-    }        
-    boot(nvram);
-
-//    printf("booting from nvram image with 2 valid boot partitions, the first of which gets erased\n");
-//    if (initializeNvram(nvram, argv[1]) != SUCCESS) {
-//	printf("Error: could not open file %s!\n", argv[1]);
-//	return -1;
-//    }        
-//    eraseSector(nvram, 1, 0xff);
-//    boot(nvram);
+//    eraseSectorNvram(&nvram, 1);
+//    boot(&nvram);
 }
 
-static int boot(uint8_t *nvram) {
+static int boot(nvram_t *nvram) {
     int i;
 
-    uint8_t *nvramReadPtr;
-    nvramReadPtr = nvram;
+    uint32_t nvramPtr = 0;
 
-    if (readMagicWord(&nvramReadPtr) != SUCCESS) {
+    if (readMagicWord(nvram, &nvramPtr) != SUCCESS) {
         printf("    Error: magic word mismatch\n");
         return -1;
     }
     
     partitionTableHeader_t partitionTableHeader;
-    if (readPartitionTableHeader(&partitionTableHeader, &nvramReadPtr) != SUCCESS) {
+    if (readPartitionTableHeader(nvram, &partitionTableHeader, &nvramPtr) != SUCCESS) {
         printf("    Error reading the partition table header\n");
         return -1;
     }
-    //    printPartitionTableHeader(&partitionTableHeader);
 
-    nvramReadPtr = &(nvram[partitionTableHeader.firstPartitionHeaderAddress]);
+    nvramPtr = partitionTableHeader.firstPartitionHeaderAddress;
     for (i = 0; ; i++) {
         partitionHeader_t partitionHeader;
+        uint8_t crcCheck = readPartitionHeader(nvram, &partitionHeader, &nvramPtr);
         if (isEndOfPartitionTable(&partitionHeader)) {
             printf("    partition %2d: reached end of partition table... No boot partition found\n", i);
             return -1;
-        } else if (readPartitionHeader(&partitionHeader, nvramReadPtr) != SUCCESS) {
+        } else if (crcCheck != SUCCESS) {
             printf("    partition %2d: Wrong header in CRC\n", i);
         } else if (isBootPartition(&partitionHeader)) {
             printf("    partition %2d: found boot partition... Booting from it\n", i);
@@ -125,60 +124,44 @@ static int boot(uint8_t *nvram) {
         } else {
             printf("    partition %2d: unknown partition type\n", i);
         }
-        nvramReadPtr += partitionTableHeader.partitionHeaderSize;
+        nvramPtr += partitionTableHeader.partitionHeaderSize;
     }
     
     return 0;
 }
 
-static int initializeNvram(uint8_t *nvram, const char *filePath) {
-    FILE *nvramContent = fopen(filePath,"r");
-    if (nvramContent == NULL) {
-	return FAILURE;
-    }
-    
-    int nvram_idx = 0;
-    
-    ssize_t read;
-    char *line = (char*)malloc((NUMBER_OF_CHAR_PER_BYTE + 1) * sizeof(char));
-    size_t len = 0;
-    while ((read = getline(&line, &len, nvramContent)) != -1) {
-
-        /** check if the line is a comment **/
-        if (strncmp(line, "//", 2) == 0) {
-            continue;
-        }
-
-        /** remove characters pasted the NUMBER_OF_CHAR_PER_BYTE first characters **/
-        line[NUMBER_OF_CHAR_PER_BYTE] = (char)0;
-
-        /** convert the line to a number **/
-        char *strEnd;
-        nvram[nvram_idx++] = (uint8_t)strtoul(line,&strEnd, 16);
-    }
-    free(line);
-    fclose(nvramContent);
-    return SUCCESS;
+static int readMagicWord(nvram_t *nvram, uint32_t *address) {
+    uint8_t magicWordRead[NVRAM_BYTE_COUNT_MAGIC_WORD];
+    const uint8_t expectedMagicWord[] = {0xfe, 0xde, 0xbe, 0xda};
+    readNvram(nvram, *address, magicWordRead, NVRAM_BYTE_COUNT_MAGIC_WORD);
+    *address += 4;
+    return memcmp(magicWordRead,expectedMagicWord,NVRAM_BYTE_COUNT_MAGIC_WORD) == 0 ? SUCCESS : FAILURE;
 }
 
-static int readMagicWord(uint8_t **nvramPtr) {
-    //    printf("%20s: %s\n","Magic Word", getUint8ArrayHexString(*nvramPtr, NVRAM_BYTE_COUNT_MAGIC_WORD));
-    bool magicWordMatch = ((*nvramPtr)[0] == 0xfe) && ((*nvramPtr)[1] == 0xde) && ((*nvramPtr)[2] == 0xbe) && ((*nvramPtr)[3] == 0xda);
-    (*nvramPtr) += NVRAM_BYTE_COUNT_MAGIC_WORD;
-    return magicWordMatch?SUCCESS:FAILURE;
-}
+static int readPartitionTableHeader(nvram_t *nvram, partitionTableHeader_t *partitionTableHeader, uint32_t *address) {
+    uint8_t partitionTableHeaderRead[sizeof(*partitionTableHeader)];
+    readNvram(nvram, *address, partitionTableHeaderRead, sizeof(partitionTableHeaderRead));
 
-static int readPartitionTableHeader(partitionTableHeader_t *partitionTableHeader, uint8_t **nvramPtr) {
-    uint32_t computedCrc = computeCrc32(*nvramPtr, sizeof(*partitionTableHeader) - sizeof(partitionTableHeader->crc));
-    *nvramPtr += 8;
-    partitionTableHeader->revision = getUint8ArrayUint32(*nvramPtr);
-    *nvramPtr += 4;
-    partitionTableHeader->firstPartitionHeaderAddress = getUint8ArrayUint32(*nvramPtr);    
-    *nvramPtr += 4;
-    partitionTableHeader->partitionHeaderSize = getUint8ArrayUint32(*nvramPtr);
-    *nvramPtr += 4;
-    partitionTableHeader->crc = getUint8ArrayUint32(*nvramPtr);
-    *nvramPtr += 4;
+    uint8_t *ptr = partitionTableHeaderRead;
+    uint32_t computedCrc = computeCrc32(partitionTableHeaderRead, sizeof(partitionTableHeaderRead) - sizeof(partitionTableHeader->crc));
+    ptr += 8;
+    partitionTableHeader->revision = getUint8ArrayUint32(ptr);
+    ptr += 4;
+    partitionTableHeader->firstPartitionHeaderAddress = getUint8ArrayUint32(ptr);    
+    ptr += 4;
+    partitionTableHeader->partitionHeaderSize = getUint8ArrayUint32(ptr);
+    ptr += 4;
+    partitionTableHeader->crc = getUint8ArrayUint32(ptr);
+    ptr += 4;
+
+    printf("%20s: %08x\n", "revision", partitionTableHeader->revision);
+    printf("%20s: %08x\n", "revision", partitionTableHeader->firstPartitionHeaderAddress);
+    printf("%20s: %08x\n", "PH size", partitionTableHeader->partitionHeaderSize);
+    printf("%20s: %08x\n", "crc", partitionTableHeader->crc);
+    printf("%20s: %08x\n", "computedCrc", computedCrc);
+
+    address += sizeof(partitionTableHeaderRead);
+
     if (computedCrc == partitionTableHeader->crc) {
         return SUCCESS;
     } else {
@@ -186,10 +169,12 @@ static int readPartitionTableHeader(partitionTableHeader_t *partitionTableHeader
     }
 }
 
-static int readPartitionHeader(partitionHeader_t *partitionHeader, uint8_t *nvramPtr) {
-    uint8_t *ptr;
-    uint32_t computedCrc = computeCrc32(nvramPtr, sizeof(*partitionHeader) - sizeof(partitionHeader->crc));
-    ptr = nvramPtr;
+static int readPartitionHeader(nvram_t *nvram, partitionHeader_t *partitionHeader, uint32_t *address) {
+    uint8_t partitionHeaderRead[sizeof(*partitionHeader)];
+    readNvram(nvram, *address, partitionHeaderRead, sizeof(partitionHeaderRead));
+
+    uint8_t *ptr = partitionHeaderRead;
+    uint32_t computedCrc = computeCrc32(partitionHeaderRead, sizeof(partitionHeaderRead) - sizeof(partitionHeader->crc));
     memcpy(partitionHeader->type, ptr, sizeof(partitionHeader->type));
     ptr += sizeof(partitionHeader->type);
     memcpy(partitionHeader->guid, ptr, sizeof(partitionHeader->guid));
@@ -204,6 +189,7 @@ static int readPartitionHeader(partitionHeader_t *partitionHeader, uint8_t *nvra
     ptr += sizeof(partitionHeader->name);
     partitionHeader->crc = getUint8ArrayUint32(ptr);
     ptr += sizeof(partitionHeader->crc);
+    printf("computedCrc(%08x) ?= partitionHeader->crc(%08x)\n",computedCrc,partitionHeader->crc);
     if (computedCrc == partitionHeader->crc) {
         return SUCCESS;
     } else {
@@ -286,4 +272,143 @@ static uint32_t computeCrc32(const uint8_t *ptr, int byteLength) {
       crc = crc^ptr[i];
     }
     return crc;
+}
+
+static void createNvram(nvram_t *nvram, int sectorByteSize, int sectorCount, uint8_t eraseValue) {
+    int i;
+
+    nvram->sectorByteSize = sectorByteSize;
+    nvram->sectorCount = sectorCount;
+    nvram->eraseValue = eraseValue;
+    nvram->sectorData = (uint8_t**)malloc(sectorCount * sizeof(uint8_t*));
+    for (i = 0; i < sectorCount; i++) {
+        nvram->sectorData[i] = (uint8_t*)malloc(sectorByteSize * sizeof(uint8_t));
+    }
+}
+
+static void deleteNvram(nvram_t *nvram) {
+    int i;
+    for (i = 0; i < nvram->sectorCount; i++) {
+        free(nvram->sectorData[i]);
+    }
+    free(nvram->sectorData);
+}
+
+static void readNvram(const nvram_t *nvram, uint32_t address, uint8_t *data, int size) {   
+    int sectorIndex = address / nvram->sectorByteSize;
+    int offsetInSector = address % nvram->sectorByteSize;
+    uint8_t *ptr;
+    ptr = data;
+    int remainingToRead = size;
+
+    while(remainingToRead > 0) {
+        int readInSector = remainingToRead > nvram->sectorByteSize - offsetInSector ? nvram->sectorByteSize - offsetInSector: remainingToRead;
+        memcpy(ptr, &(nvram->sectorData[sectorIndex][offsetInSector]), readInSector);
+        offsetInSector = 0;
+        sectorIndex++;
+        ptr += readInSector;
+        remainingToRead -= readInSector;
+    }
+}
+static void writeNvram(nvram_t *nvram, uint32_t address, const uint8_t *data, int size) {
+    int sectorIndex = address / nvram->sectorByteSize;
+    int offsetInSector = address % nvram->sectorByteSize;
+    const uint8_t *ptr;
+    ptr = data;
+    int remainingToWrite = size;
+
+    while(remainingToWrite > 0) {
+        int writeInSector = remainingToWrite > nvram->sectorByteSize - offsetInSector ? nvram->sectorByteSize - offsetInSector: remainingToWrite;
+        memcpy(&(nvram->sectorData[sectorIndex][offsetInSector]), ptr, writeInSector);
+        offsetInSector = 0;
+        sectorIndex++;
+        ptr += writeInSector;
+        remainingToWrite -= writeInSector;
+    }
+}
+
+static int initializeNvram(uint8_t *nvram, const char *filePath) {
+    FILE *nvramContent = fopen(filePath,"r");
+    if (nvramContent == NULL) {
+	return FAILURE;
+    }
+    
+    int nvram_idx = 0;
+    
+    ssize_t read;
+    char *line = (char*)malloc((NUMBER_OF_CHAR_PER_BYTE + 1) * sizeof(char));
+    size_t len = 0;
+    while ((read = getline(&line, &len, nvramContent)) != -1) {
+
+        /** check if the line is a comment **/
+        if (strncmp(line, "//", 2) == 0) {
+            continue;
+        }
+
+        /** remove characters pasted the NUMBER_OF_CHAR_PER_BYTE first characters **/
+        line[NUMBER_OF_CHAR_PER_BYTE] = (char)0;
+
+        /** convert the line to a number **/
+        char *strEnd;
+        nvram[nvram_idx++] = (uint8_t)strtoul(line,&strEnd, 16);
+    }
+    free(line);
+    fclose(nvramContent);
+    return SUCCESS;
+}
+
+static int writeNvramFromFile(nvram_t *nvram, uint32_t address, const char *filePath, int size) {
+    FILE *nvramContent = fopen(filePath,"r");
+    if (nvramContent == NULL) {
+	return FAILURE;
+    }
+
+    uint8_t data[size];
+
+    ssize_t read;
+    char *line = (char*)malloc((NUMBER_OF_CHAR_PER_BYTE + 1) * sizeof(char));
+    size_t len = 0;
+    int byteCount = 0;
+    while (byteCount < size) {
+        if ((read = getline(&line, &len, nvramContent)) == -1) {
+            printf("file shorter than size\n");
+            return -1;
+        }
+
+        /** check if the line is a comment **/
+        if (strncmp(line, "//", 2) == 0) {
+            continue;
+        }
+
+        /** remove characters pasted the NUMBER_OF_CHAR_PER_BYTE first characters **/
+        line[NUMBER_OF_CHAR_PER_BYTE] = (char)0;
+
+        /** convert the line to a number **/
+        char *strEnd;
+        data[byteCount++] = (uint8_t)strtoul(line,&strEnd, 16);
+    }
+    free(line);
+    fclose(nvramContent);
+
+    writeNvram(nvram, address, data, size);
+    return SUCCESS;
+}
+
+static void printNvram(nvram_t *nvram) {
+    int sectorIndex;
+    int byteIndex;
+    for (sectorIndex = 0; sectorIndex < nvram->sectorCount; sectorIndex++) {
+        printf("[%04x]:",sectorIndex);
+        for (byteIndex = 0; byteIndex < nvram->sectorByteSize; byteIndex++) {
+            printf("%02x",nvram->sectorData[sectorIndex][byteIndex]);
+        }
+        printf("\n");
+    }
+}
+
+static void eraseSectorNvram(nvram_t *nvram, int sectorIndex) {
+    int byteIndex;
+    for (byteIndex = 0; byteIndex < nvram->sectorByteSize; byteIndex++) {
+        nvram->sectorData[sectorIndex][byteIndex] = nvram->eraseValue;
+    }
 }

@@ -510,7 +510,7 @@ da
 00
 00
 00
-22 // partition header: type
+21 // partition header: type
 68
 61
 48
@@ -637,7 +637,7 @@ da
 00 // partition header: crc
 00
 00
-5b
+58
 00 // partition header: padding
 00
 00
@@ -1022,7 +1022,7 @@ da
 00
 00
 00
-22 // partition header: type
+21 // partition header: type
 68
 61
 48
