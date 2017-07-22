@@ -49,6 +49,7 @@ typedef struct partitionHeader_struct {
 } partitionHeader_t;
 
 static void createNvram(nvram_t *nvram, int sectorByteSize, int sectorCount, uint8_t eraseValue);
+static void deleteNvram(nvram_t *nvram);
 static void printNvram(nvram_t *nvram);
 static void readNvram(const nvram_t *nvram, uint32_t address, uint8_t *data, int size);
 static void writeNvram(nvram_t *nvram, uint32_t address, const uint8_t *data, int size);
@@ -91,6 +92,8 @@ int main(int argc, char *argv[]) {
     printf("booting from nvram.image where 0st sector was erased\n");
     eraseSectorNvram(&nvram, 1);
     boot(&nvram);
+
+    deleteNvram(&nvram);
 }
 
 static int boot(nvram_t *nvram) {
