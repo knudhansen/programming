@@ -1,7 +1,4 @@
-fe // magic word
-de
-be
-da
+@000
 50 // PT Header::name
 54
 48
@@ -25,7 +22,7 @@ da
 00 // PT Header::CRC
 00
 00
-3a
+3f
 00
 00
 00

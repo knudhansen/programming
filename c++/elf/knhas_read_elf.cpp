@@ -187,7 +187,7 @@ public:
 int main() {
   
   FILE *elfFile;
-  elfFile = fopen("test.o","r");
+  elfFile = fopen("test2.o","r");
   
   // read elf header
   ElfHeader *elfHeader = new ElfHeader();
