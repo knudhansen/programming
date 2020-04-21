@@ -14,7 +14,6 @@ typedef struct {
 int FS_FOpenEx(const char *fileName, const char *openMode, FS_FILE **ppFile) {
   *ppFile = (FS_FILE*)malloc(sizeof(FS_FILE));
   (*ppFile)->fileId = fileHandleCounter++;
-  printf("opening file %s with mode %s. File handle id is %d\n", fileName, openMode, (*ppFile)->fileId);
   return 0;
 }
 int FS_FClose(FS_FILE *pFile) {
@@ -27,7 +26,9 @@ int FS_Read(FS_FILE *pFile, char *data, int data_size) {
 int FS_Write(FS_FILE *pFile, const char *data, int data_size) {
   return data_size;
 }
-
+int FS_Remove(const char *filename) {
+  return 0;
+}
 /** FS reference model **/
 
 const char fsrefDir[] = "ref";
@@ -51,13 +52,19 @@ FILE *popRefFileHandle(FS_FILE *pFile) {
 FILE *getRefFileHandle(FS_FILE *pFile) {
   return _getRefFileHandle(pFile, false);
 }
-
-int fsrefOpen(const char *fileName, const char *openMode, FS_FILE **ppFile) {
+char *getRefFileName(const char *fileName) {
   char *refFileName = (char*)malloc(strlen(fsrefDir) + 1 + strlen(fileName) + 1);
   sprintf(refFileName, "%s/%s", fsrefDir, fileName);
-  printf("opening file %s (%s).\n", fileName, refFileName);
+  return refFileName;
+}
+void freeRefFileName(char *refFileName) {
+  free(refFileName);
+}
 
+int fsrefOpen(const char *fileName, const char *openMode, FS_FILE **ppFile) {
+  char *refFileName = getRefFileName(fileName);
   FILE *f = fopen(refFileName, openMode);
+  freeRefFileName(refFileName);
 
   file_handles_map.insert(std::make_pair(*ppFile, f));
 
@@ -89,6 +96,13 @@ int fsrefWrite(FS_FILE *pFile, const char *data, int data_size) {
     return 0;
   }
   return fwrite(data, 1, data_size, f);
+}
+
+int fsrefRemove(const char *fileName) {
+  char *refFileName = getRefFileName(fileName);
+  int rv = remove(refFileName);
+  freeRefFileName(refFileName);
+  return rv;
 }
 
 /** testbench **/
