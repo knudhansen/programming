@@ -1,0 +1,3 @@
+int main(int argc, char *argv[]) {
+  Step *step = new Step("my first step");
+}

@@ -1,0 +1,13 @@
+VariantDir('out','src')
+
+sources = [
+    'main',
+    'recipe',
+    'step',
+]
+
+objects = []
+for source in sources:
+    objects.extend(Object('out/%s.cpp' % source))
+
+Program(objects)
