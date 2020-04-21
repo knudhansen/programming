@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+
+
+
 /** FS under test **/
 
 int fileHandleCounter = 0;
@@ -29,6 +32,10 @@ int FS_Write(FS_FILE *pFile, const char *data, int data_size) {
 int FS_Remove(const char *filename) {
   return 0;
 }
+
+
+
+
 /** FS reference model **/
 
 const char fsrefDir[] = "ref";
@@ -105,6 +112,9 @@ int fsrefRemove(const char *fileName) {
   return rv;
 }
 
+
+
+
 /** testbench **/
 
 static char* toString(int value) {  
@@ -156,6 +166,11 @@ int fstestWrite(FS_FILE *pFile, const char *data, int data_size) {
   fstestAssertEqual("fstestWrite", "returnValue", rvfut, rvref);
   return rvfut;
 }
+
+
+
+
+/** test **/
 
 int main(int argc, char *argv[]) {
   FS_FILE *file0;
