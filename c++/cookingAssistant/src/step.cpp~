@@ -1,3 +1,0 @@
-Step::Step(const char *name) {
-  this->name = malloc(strlen(name) * sizeof (char));
-}
