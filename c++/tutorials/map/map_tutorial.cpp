@@ -117,10 +117,19 @@ int fsrefRemove(const char *fileName) {
 
 /** testbench **/
 
+static bool equal(int value0, int value1) {
+  return value0 == value1;
+}
 static char* toString(int value) {  
   char *string = (char*)malloc(log10(value)+1+1);
   sprintf(string, "%d", value);
   return string;
+}
+static bool equal(char *value0, char *value1) {
+  return strcmp(value0, value1) == 0;
+}
+static char* toString(char *value) {
+char *string = (char)
 }
 static void freeString(char* string) {
   free(string);
@@ -129,7 +138,7 @@ static void freeString(char* string) {
 template<typename T>
 void fstestAssertEqual(const char *functionName, const char *valueName, T futValue, T refValue) {
   const char assertEqualFailMessage[] = "ASSERT EQUAL FAILURE::";
-  if (futValue != refValue) {
+  if (equal(futValue,refValue)) {
     char *futValueStr = toString(futValue);
     char *refValueStr = toString(refValue);
     char *exceptionMessage = (char*)malloc(strlen(assertEqualFailMessage) + 1 + strlen(functionName) + 1 + strlen(valueName) + 1 + strlen(futValueStr) + 2 + strlen(refValueStr) + 1);
@@ -156,8 +165,15 @@ int fstestClose(FS_FILE *pFile) {
 
 int fstestRead(FS_FILE *pFile, char *data, int data_size) {
   int rvfut = FS_Read(pFile, data, data_size);
-  int rvref = fsrefRead(pFile, data, data_size);
-  fstestAssertEqual("fstestRead", "returnValue", rvfut, rvref);
+
+  char * refData = (char*)malloc(data_size * sizeof(char));
+  {
+    int rvref = fsrefRead(pFile, refData, data_size);
+    fstestAssertEqual("fstestRead", "returnValue", rvfut, rvref);
+    fstestAssertEqual("fstestRead", "readData", data, refData);
+  }
+  free(refData);
+
   return rvfut;
 }
 int fstestWrite(FS_FILE *pFile, const char *data, int data_size) {
@@ -178,6 +194,7 @@ int main(int argc, char *argv[]) {
     fstestOpen("file0.txt", "w", &file0);
     fstestWrite(file0, "abcd", 4);
     fstestClose(file0);
+    fstestOpen("file0.txt", "w", &file0);
   } catch (const std::exception &exception) {
     printf("CAUGHT EXCEPTION: %s\n", exception.what());
   }
