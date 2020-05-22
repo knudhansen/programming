@@ -1,0 +1,3 @@
+[submodule "c++/bitcoin_fun/mbedtls"]
+	path = c++/bitcoin_fun/mbedtls
+	url = https://github.com/ARMmbed/mbedtls
