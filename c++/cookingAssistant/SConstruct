@@ -1,13 +1,12 @@
 VariantDir('out','src')
 
-sources = [
-    'main',
-    'recipe',
-    'step',
-]
+programs = [ {'name': 'linkedListTest'   , 'sources': ['linkedListTest']        , 'objects': []},
+	     {'name': 'cookingAssitant'  , 'sources': ['main', 'recipe', 'step'], 'objects': []},
+            ]
 
-objects = []
-for source in sources:
-    objects.extend(Object('out/%s.cpp' % source))
+for program in programs:
+    for source in program['sources']:
+        program['objects'].extend(Object('out/%s.cpp' % source))
+    prgm = Program(target = program['name'],
+                   source = program['objects'])
 
-Program(objects)

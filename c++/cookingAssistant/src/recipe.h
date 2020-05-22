@@ -1,10 +1,13 @@
 #ifndef RECIPE_H
 #define RECIPE_H
 
+#include "linked_list.h"
+#include "step.h"
+
 class Recipe {
  private:
   char *name;
-  Step *steps;
+  LinkedList<Step*> *steps;
  public:
   Recipe(void);
   ~Recipe(void);

@@ -2,12 +2,14 @@
 #define STEP_H
 
 #include <stddef.h>
+#include <time.h>
 
 class Step;
 
 class Step {
  private:
   char *action;
+  time_t duration;
   Step *previous;
   Step *next;
 
