@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "tinycrypt/ecc.h"
-
 static int read32BitArrayFromString(const char *string, uint32_t *destination, int wordSize);
 static int print32BitArray(const char * prefix, const uint32_t *array, int arrayLength);
 static int countLeadingZeroBits(uint8_t value, uint8_t mask);
 
+/******* needs updating after changing from tinycrypt to mbedtls *******/
+/*
 int readPrivateKey(const char *string, uint32_t *lPrivate) {
     return read32BitArrayFromString(string, lPrivate, NUM_ECC_DIGITS);
 }
@@ -39,11 +39,12 @@ void printSignature(const uint32_t *r, const uint32_t *s) {
     print32BitArray("signature.r", r, NUM_ECC_DIGITS);
     print32BitArray("signature.s", s, NUM_ECC_DIGITS);
 }
-
+*/
 void printDigest(const uint8_t *digest) {
-    print8BitArray("sha256 digest", digest, NUM_ECC_DIGITS*4);
+    print8BitArray("sha256 digest", digest, 64);
 }
 
+/*
 void printRandom(const uint32_t *random) {
     print32BitArray("random", random, NUM_ECC_DIGITS * 2);
 }
@@ -52,7 +53,7 @@ void printPublicKey(const EccPoint *publicKey) {
     print32BitArray("publicKey.x", publicKey->x, NUM_ECC_DIGITS);
     print32BitArray("publicKey.y", publicKey->y, NUM_ECC_DIGITS);
 }
-
+*/
 static int read32BitArrayFromString(const char *string, uint32_t *destination, int wordSize) {
     int i;
     for (i=0; i<wordSize; i++) {
