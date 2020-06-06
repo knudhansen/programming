@@ -28,29 +28,29 @@ int main(int argc, char *argv[]) {
   int highScore = 0;
 
   char *shaDataString = (char*)malloc(sizeof(shaData)*2+1);
+  {
 
-  while (score < difficulty) {
-    mbedtls_sha256_init(&sha256Context);
-    mbedtls_sha256_update(&sha256Context,
-			  shaData,
-			  sizeof(shaData));
-    mbedtls_sha256_finish(&sha256Context,
-			  shaDigest);
-    
-    score = countLeadingZeroes(shaDigest, 64);
-    histogram[score]++;
-    if (score > highScore) {
-      highScore = score;
+    while (score < difficulty) {
+      mbedtls_sha256_init(&sha256Context);
+      mbedtls_sha256_update(&sha256Context,
+			    shaData,
+			    sizeof(shaData));
+      mbedtls_sha256_finish(&sha256Context,
+			    shaDigest);
+
+      score = countLeadingZeroes(shaDigest, 64);
+      histogram[score]++;
+      if (score > highScore) {
+	highScore = score;
+      }
+      sprintf8BitArray(shaDataString, shaData, sizeof(shaData));
+      printf("%s -- %4d -- %04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x -- leading 0's: %d\n", shaDataString, highScore, histogram[highScore], histogram[highScore-1], histogram[highScore-2], histogram[highScore-3], histogram[highScore-4], histogram[highScore-5], histogram[highScore-6], histogram[highScore-7], histogram[highScore-8], histogram[highScore-9], histogram[highScore-10], histogram[highScore-11], histogram[highScore-12], histogram[highScore-13], histogram[highScore-14], histogram[highScore-15], score);
+
+      increment8BitArray(shaData, sizeof(shaData));
     }
-    sprintf8BitArray(shaDataString, shaData, sizeof(shaData));
-    //    printf("%s -- %4d -- %04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x -- leading 0's: %d\n", shaDataString, highScore, histogram[highScore], histogram[highScore-1], histogram[highScore-2], histogram[highScore-3], histogram[highScore-4], histogram[highScore-5], histogram[highScore-6], histogram[highScore-7], histogram[highScore-8], histogram[highScore-9], histogram[highScore-10], histogram[highScore-11], histogram[highScore-12], histogram[highScore-13], histogram[highScore-14], histogram[highScore-15], score);
-    printf("%4d -- %04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x.%04x -- leading 0's: %d\n", highScore, histogram[highScore], histogram[highScore-1], histogram[highScore-2], histogram[highScore-3], histogram[highScore-4], histogram[highScore-5], histogram[highScore-6], histogram[highScore-7], histogram[highScore-8], histogram[highScore-9], histogram[highScore-10], histogram[highScore-11], histogram[highScore-12], histogram[highScore-13], histogram[highScore-14], histogram[highScore-15], score);
 
-    increment8BitArray(shaData, sizeof(shaData));
   }
-
   free(shaDataString);
 
   printDigest(shaDigest);
 }
-

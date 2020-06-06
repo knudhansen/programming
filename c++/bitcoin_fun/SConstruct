@@ -10,3 +10,7 @@ utils = env.Object('mbedtls/library/platform_util.c')
 utilities = env.Object('utilities/utilities.c')
 
 pow = env.Program(['pow/pow.c'] + sha256 + utils + utilities)
+
+blockHeader = env.Object('bitcoins/blockHeader.cpp')
+
+blockHeaderTest = env.Program(['bitcoins/blockHeaderTest.cpp'] + blockHeader)
