@@ -1,3 +1,5 @@
+#TODO: move to variant dir. This requires moving mbedtls submodule. Not totally sure how. Maybe it's enough to move the directory and update the .gitmodules file...
+
 env = Environment()
 
 env.Append(CPPPATH = ['mbedtls/include',
