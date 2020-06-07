@@ -24,7 +24,9 @@ class BlockHeader {
   void setNonce(uint32_t nonce);
   void updateTime(void);
 
-  void serialize(char serializedBlokHeader[BLOCKHEADER_SERIALIZED_BYTE_SIZE]);
+  char *toString(void);
+
+  void serialize(unsigned char serializedBlokHeader[BLOCKHEADER_SERIALIZED_BYTE_SIZE]);
 
 };
 

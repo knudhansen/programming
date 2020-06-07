@@ -1,11 +1,15 @@
 #include "blockHeader.h"
 
+#include <chrono>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 BlockHeader::BlockHeader(int32_t blockVersion, const char *previousBlockHeaderHash, uint32_t nBits) {
 
   this->blockVersion = blockVersion;
   memcpy(this->previousBlockHeaderHash, previousBlockHeaderHash, BLOCKHEADER_HASH_BYTE_SIZE);
+  memset(this->merkelRootHash, 0, BLOCKHEADER_HASH_BYTE_SIZE);
   this->nBits = nBits;
 
   this->nonce = 0;
@@ -19,10 +23,23 @@ void BlockHeader::setNonce(uint32_t nonce) {
   this->nonce = nonce;
 }
 void BlockHeader::updateTime(void) {
-  this->time = 0;
+  // get the current time
+  const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+  // cast the duration into seconds
+  const std::chrono::seconds seconds = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
+
+  // return the number of seconds
+  this->time = seconds.count();
+  printf("seconds since epoch %08x\n", this->time);
 }
 
-void BlockHeader::serialize(char serializedBlockHeader[BLOCKHEADER_SERIALIZED_BYTE_SIZE]) {
+char *BlockHeader::toString(void) {
+  char *retString = (char*)malloc(100 * sizeof(char));
+  sprintf(retString, "time=%08x, nBits=%08x, nonce=%08x", this->time, this->nBits, this->nonce);
+  return retString;
+}
+
+void BlockHeader::serialize(unsigned char serializedBlockHeader[BLOCKHEADER_SERIALIZED_BYTE_SIZE]) {
   // serializing version
   serializedBlockHeader[0] = (this->blockVersion >>  0) & 0xff;
   serializedBlockHeader[1] = (this->blockVersion >>  8) & 0xff;
