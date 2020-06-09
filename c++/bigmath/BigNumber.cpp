@@ -68,7 +68,7 @@ BigNumber BigNumber::operator+(BigNumber& b)
     sum.number[i] = (temp_sum & 0xffffffff);
   }
 
-  // in case there as no carry for the MSI (most significant int) reducing the length.
+  // in case there is no carry for the MSI (most significant int) reducing the length.
   if (sum.number[sum.length - 1] == 0) {
     sum.length--;
   }
