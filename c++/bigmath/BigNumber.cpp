@@ -48,14 +48,14 @@ BigNumber::BigNumber(char *number)
 
 BigNumber BigNumber::operator+(BigNumber& b)
 {
-  #warning "is this legal to return a local variable?"
+  #warning "is it legal to return a local variable?"
   BigNumber sum;
 
   // worst case, the sum is one larger than the largest operand.
   sum.length = this->length > b.length ? this->length : b.length;
   sum.length++;
   // allocating number array for the sum.
-  sum.number = (unsigned int*) malloc (sum.length * sizeof(int));
+  sum.number = (unsigned int*) malloc (sum.length * sizeof(unsigned int));
 
   // computing the sum. Ripple carry.
   long temp_sum = 0;
@@ -78,15 +78,15 @@ BigNumber BigNumber::operator+(BigNumber& b)
 
 BigNumber BigNumber::operator*(BigNumber& b)
 {
-  #warning "is this legal to return a local variable?"
+  #warning "is it legal to return a local variable?"
   BigNumber product;
 
   // worst case, the product has the sum of the operands integers.
   product.length = this->length + b.length;
   // allocating the number array for the product
-  product.number = (unsigned int*) malloc (product.length * sizeof(int));
+  product.number = (unsigned int*) malloc (product.length * sizeof(unsigned int));
   // initializing the product
-  memset(product.number, 0, product.length * sizeof(int));
+  memset(product.number, 0, product.length * sizeof(unsigned int));
 
   // computing the product
   for (int i = 0; i < this->length; i++) {
@@ -129,8 +129,8 @@ void BigNumber::operator=(BigNumber& b)
 bool BigNumber::operator==(BigNumber& b)
 {
   for (int i = 0; i < (this->length > b.length ? this->length : b.length); i++) {
-    const int anumber = i >= this->length ? 0 : this->number[i];
-    const int bnumber = i >= b.length ? 0 : b.number[i];
+    const unsigned int anumber = i >= this->length ? 0 : this->number[i];
+    const unsigned int bnumber = i >= b.length ? 0 : b.number[i];
     if (anumber != bnumber) {
       return false;
     }
@@ -141,6 +141,21 @@ bool BigNumber::operator==(BigNumber& b)
 bool BigNumber::operator!=(BigNumber& b)
 {
   return !(*this == b);
+}
+
+bool BigNumber::operator<=(BigNumber& b)
+{
+  const int maxlength = this->length > b.length ? this->length : b.length;
+  for (int i = maxlength - 1; i >= 0; i--) {
+    const unsigned int anumber = i >= this->length ? 0 : this->number[i];
+    const unsigned int bnumber = i >= b.length ? 0 : b.number[i];
+    if (anumber > bnumber) {
+      return false;
+    } else if (anumber < bnumber) {
+      return true;
+    }
+  }
+  return true;
 }
 
 bool BigNumber::isPrime(void) {

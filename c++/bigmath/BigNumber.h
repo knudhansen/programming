@@ -20,6 +20,7 @@ class BigNumber {
 //  BigNumber operator%(BigNumber& b);
   bool operator==(BigNumber& b);
   bool operator!=(BigNumber& b);
+  bool operator<=(BigNumber& b);
 
   bool isPrime(void);
 
