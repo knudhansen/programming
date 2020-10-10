@@ -470,7 +470,6 @@ int main(int argc, char **argv)
   BigNumber bnb = bn1 * bna;
 
   bnb.print();
-
 }
 
 

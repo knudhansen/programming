@@ -13,13 +13,18 @@ BigNumber::BigNumber(void)
 {
 }
 
-BigNumber::BigNumber(char *number)
+BigNumber::~BigNumber(void)
+{
+  #warning "destructor not implemented yet."
+}
+
+BigNumber::BigNumber(char *numberAsString)
 {
 
-  // determining number of integegers in number
-  int numberOfIntegersInNumber = strlen(number) / NUMBER_OF_DIGITS_IN_INT;
-  if (strlen(number) % NUMBER_OF_DIGITS_IN_INT > 0) {
-    // unless number is exactly fits in a number of int, we have to increment the number of ints to have the reminder
+  // determining number of integers in number
+  int numberOfIntegersInNumber = strlen(numberAsString) / NUMBER_OF_DIGITS_IN_INT;
+  if (strlen(numberAsString) % NUMBER_OF_DIGITS_IN_INT > 0) {
+    // unless number exactly fits in a number of int, we have to increment the number of ints to have the reminder
     numberOfIntegersInNumber++;
   }
   this->number = (unsigned int*) malloc (numberOfIntegersInNumber * sizeof(int));
@@ -27,17 +32,17 @@ BigNumber::BigNumber(char *number)
   int intIndex = -1;
   char intString[NUMBER_OF_DIGITS_IN_INT + 1];
 
-  while ((intIndex + 2) * NUMBER_OF_DIGITS_IN_INT < strlen(number)) {
+  while ((intIndex + 2) * NUMBER_OF_DIGITS_IN_INT < strlen(numberAsString)) {
     intIndex++;
-    strncpy(intString, number + strlen(number) - (intIndex+1) * NUMBER_OF_DIGITS_IN_INT, NUMBER_OF_DIGITS_IN_INT);
+    strncpy(intString, numberAsString + strlen(numberAsString) - (intIndex+1) * NUMBER_OF_DIGITS_IN_INT, NUMBER_OF_DIGITS_IN_INT);
     intString[NUMBER_OF_DIGITS_IN_INT] = 0;
     this->number[intIndex] = xatoi(intString);
   }
 
   intIndex++;
-  if ((intIndex) * NUMBER_OF_DIGITS_IN_INT < strlen(number)) {
-    strncpy(intString, number, strlen(number) - (intIndex) * NUMBER_OF_DIGITS_IN_INT);
-    intString[strlen(number) - (intIndex) * NUMBER_OF_DIGITS_IN_INT] = 0;
+  if ((intIndex) * NUMBER_OF_DIGITS_IN_INT < strlen(numberAsString)) {
+    strncpy(intString, numberAsString, strlen(numberAsString) - (intIndex) * NUMBER_OF_DIGITS_IN_INT);
+    intString[strlen(numberAsString) - (intIndex) * NUMBER_OF_DIGITS_IN_INT] = 0;
     this->number[intIndex] = xatoi(intString);
   }
 
@@ -45,6 +50,10 @@ BigNumber::BigNumber(char *number)
 
 }
 
+BigNumber::BigNumber(unsigned char *numberAsByteArray, int byteCount)
+{
+  #warning "constructor from byte array not implemented yet."
+}
 
 BigNumber BigNumber::operator+(BigNumber& b)
 {

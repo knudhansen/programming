@@ -11,7 +11,9 @@ class BigNumber {
 
  public:
   BigNumber(void);
-  BigNumber(char* number);
+  ~BigNumber(void);
+  BigNumber(char* numberAsString);
+  BigNumber(unsigned char* numberAsByteArray, int byteCount);
 
   void operator=(BigNumber& a);
   BigNumber operator+(BigNumber& b);
