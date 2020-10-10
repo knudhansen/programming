@@ -1,6 +1,7 @@
 #ifndef __BLOCKHEADER_H__
 #define __BLOCKHEADER_H__
 
+#include "BigNumber.h"
 #include <cstdint>
 
 #define BLOCKHEADER_HASH_BYTE_SIZE 32
@@ -26,8 +27,9 @@ class BlockHeader {
 
   char *toString(void);
 
+  BigNumber getTarget(void);
   void serialize(unsigned char serializedBlokHeader[BLOCKHEADER_SERIALIZED_BYTE_SIZE]);
-
+  void hash(unsigned char hash[BLOCKHEADER_HASH_BYTE_SIZE]);
 };
 
 #endif

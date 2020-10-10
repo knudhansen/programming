@@ -1,4 +1,5 @@
 #include "blockHeader.h"
+#include "mbedtls/sha256.h"
 
 #include <chrono>
 #include <stdio.h>
@@ -64,4 +65,24 @@ void BlockHeader::serialize(unsigned char serializedBlockHeader[BLOCKHEADER_SERI
   serializedBlockHeader[4 + 2 * BLOCKHEADER_HASH_BYTE_SIZE + 8 + 1] = (this->nonce >>  8) & 0xff;
   serializedBlockHeader[4 + 2 * BLOCKHEADER_HASH_BYTE_SIZE + 8 + 2] = (this->nonce >> 16) & 0xff;
   serializedBlockHeader[4 + 2 * BLOCKHEADER_HASH_BYTE_SIZE + 8 + 3] = (this->nonce >> 24) & 0xff;
+}
+
+void BlockHeader::hash(unsigned char hash[BLOCKHEADER_HASH_BYTE_SIZE]) {
+  unsigned char serializedBlockHeader[BLOCKHEADER_SERIALIZED_BYTE_SIZE];
+  mbedtls_sha256_context sha256Context;
+
+  this->serialize(serializedBlockHeader);
+  mbedtls_sha256_init(&sha256Context);
+  mbedtls_sha256_update(&sha256Context, serializedBlockHeader, BLOCKHEADER_SERIALIZED_BYTE_SIZE);
+  mbedtls_sha256_finish(&sha256Context, hash);
+}
+
+BigNumber BlockHeader::getTarget(void) {
+  uint32_t targetExponent = (this->nBits >> 24) & 0xff;
+  uint32_t targetSignificand = this->nBits & 0xffffff;
+  if (targetSignificand < 0x10000) {
+    targetSignificand = targetSignificand << 8;
+    targetExponent = targetExponent - 1;
+  }
+  unsigned char *targetBytes = (char*)malloc()
 }

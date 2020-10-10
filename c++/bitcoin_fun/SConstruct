@@ -4,10 +4,12 @@ env = Environment()
 
 env.Append(CPPPATH = ['mbedtls/include',
                       'utilities',
+		      '../bigmath',
                      ])
 
 sha256 = env.Object('mbedtls/library/sha256.c')
 utils = env.Object('mbedtls/library/platform_util.c')
+bigmath = env.Object('../bigmath/BigNumber.cpp')
 
 utilities = env.Object('utilities/utilities.c')
 
@@ -15,4 +17,4 @@ pow = env.Program(['pow/pow.c'] + sha256 + utils + utilities)
 
 blockHeader = env.Object('bitcoins/blockHeader.cpp')
 
-blockHeaderTest = env.Program(['bitcoins/blockHeaderTest.cpp'] + blockHeader)
+blockHeaderTest = env.Program(['bitcoins/blockHeaderTest.cpp'] + blockHeader + sha256 + utils + utilities + bigmath)
