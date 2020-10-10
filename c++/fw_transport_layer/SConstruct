@@ -1,0 +1,16 @@
+VariantDir('out','src')
+
+Program('out/ftl_test',
+        [
+            'out/ftl_test.cpp',
+            'out/pifModel.cpp',
+            'out/FwTransportLayerPdu.cpp',
+        ]
+)
+
+Program('out/utl_test',
+        [
+            'out/utl_test.cpp',
+            'out/Utl.cpp',
+            'out/UtlPlug.cpp',
+	])
