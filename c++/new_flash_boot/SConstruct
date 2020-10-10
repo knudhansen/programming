@@ -1,0 +1,6 @@
+env = Environment()
+
+boot = env.Object('boot.c')
+partition_handler = env.Object('partition_handler_stub.cpp')
+
+env.Program(['test.cpp'] + boot + partition_handler)
