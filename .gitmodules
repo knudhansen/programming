@@ -1,6 +1,6 @@
 [submodule "c++/bitcoin_fun/mbedtls"]
 	path = c++/bitcoin_fun/mbedtls
 	url = https://github.com/ARMmbed/mbedtls
-[submodule "c++/tutorials/gtest/googletest"]
-	path = c++/tutorials/gtest/googletest
+[submodule "c++/tutorials/gtest/src/googletest"]
+	path = c++/tutorials/gtest/src/googletest
 	url = https://github.com/google/googletest

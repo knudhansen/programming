@@ -1,0 +1,33 @@
+srcDir = 'src'
+objDir = 'obj'
+
+googletestDir = 'googletest'
+googletestSubdir = googletestDir + '/googletest'
+
+VariantDir(objDir, srcDir)
+
+def getObjects(sourceFiles):
+    objects = []
+    for sourceFile in sourceFiles:
+        objects.extend(Object(objDir + '/' + sourceFile
+                              , CXXFLAGS='-std=c++11'
+                              , CPPPATH=[srcDir + '/' + googletestSubdir + '/include'
+                                         , srcDir + '/' + googletestSubdir
+                                        ]
+                             )
+                      )
+    return objects
+
+googletestSourceFiles = ['gtest-all.cc'
+                         , 'gtest_main.cc'
+                        ]
+googletestSourcePaths = map(lambda x: googletestSubdir + '/src/' + x, googletestSourceFiles)
+googletestObjects = getObjects(googletestSourcePaths)
+
+sample1SourceFiles = ['googletest/googletest/samples/sample1_unittest.cc'
+                      , 'googletest/googletest/samples/sample1.cc'
+                     ]
+sample1Objects = getObjects(sample1SourceFiles)
+
+
+sample1Program = Program(sample1Objects + googletestObjects)
