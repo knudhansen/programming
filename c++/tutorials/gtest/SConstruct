@@ -3,6 +3,7 @@ objDir = 'obj'
 
 googletestDir = 'googletest'
 googletestSubdir = googletestDir + '/googletest'
+googlemockSubdir = googletestDir + '/googlemock'
 
 VariantDir(objDir, srcDir)
 
@@ -13,21 +14,33 @@ def getObjects(sourceFiles):
                               , CXXFLAGS='-std=c++11'
                               , CPPPATH=[srcDir + '/' + googletestSubdir + '/include'
                                          , srcDir + '/' + googletestSubdir
+                                         , srcDir + '/' + googlemockSubdir + '/include'
+                                         , srcDir + '/' + googlemockSubdir
                                         ]
                              )
                       )
     return objects
 
 googletestSourceFiles = ['gtest-all.cc'
-                         , 'gtest_main.cc'
                         ]
 googletestSourcePaths = map(lambda x: googletestSubdir + '/src/' + x, googletestSourceFiles)
 googletestObjects = getObjects(googletestSourcePaths)
+googlemockSourceFiles = ['gmock-all.cc'
+                         , 'gmock_main.cc'
+                        ]
+googlemockSourcePaths = map(lambda x: googlemockSubdir + '/src/' + x, googlemockSourceFiles)
+googlemockObjects = getObjects(googlemockSourcePaths)
 
-sample1SourceFiles = ['googletest/googletest/samples/sample1_unittest.cc'
-                      , 'googletest/googletest/samples/sample1.cc'
+sample1SourceFiles = ['sample1_unittest.cc'
+                      , 'sample1.cc'
                      ]
-sample1Objects = getObjects(sample1SourceFiles)
+sample1SourcePaths = map(lambda x: googletestSubdir + '/samples/' + x, sample1SourceFiles)
+sample1Objects = getObjects(sample1SourcePaths)
 
 
-sample1Program = Program(sample1Objects + googletestObjects)
+sample1Program = Program(sample1Objects + googletestObjects + googlemockObjects)
+
+knudsSample1SourceFiles = ['knudsSampleUnittest.cpp','KnudsSampleCut.cpp']
+knudsSample1SourcePaths = map(lambda x: 'knuds_samples/sample1/' + x, knudsSample1SourceFiles)
+knudsSample1Objects = getObjects(knudsSample1SourcePaths)
+knudsSample1Program = Program(knudsSample1Objects + googletestObjects + googlemockObjects)
