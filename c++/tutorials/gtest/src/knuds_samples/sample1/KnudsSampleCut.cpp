@@ -13,3 +13,6 @@ KnudsSampleCut::~KnudsSampleCut(void) {
 void KnudsSampleCut::method0(void) {
   this->subObject->method0();
 }
+int KnudsSampleCut::method1(int *intPtr) {
+  return this->subObject->method1(intPtr);
+}

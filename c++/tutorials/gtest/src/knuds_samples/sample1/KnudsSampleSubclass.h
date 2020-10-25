@@ -6,6 +6,7 @@ class KnudsSampleSubclass {
   KnudsSampleSubclass(void) {}
   virtual ~KnudsSampleSubclass(void) {}
   virtual void method0(void) {}
+  virtual int method1(int *intPtr) {return 0;}
 };
 
 #endif

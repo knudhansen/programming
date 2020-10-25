@@ -40,7 +40,7 @@ sample1Objects = getObjects(sample1SourcePaths)
 
 sample1Program = Program(sample1Objects + googletestObjects + googlemockObjects)
 
-knudsSample1SourceFiles = ['knudsSampleUnittest.cpp','KnudsSampleCut.cpp']
+knudsSample1SourceFiles = ['knudsSampleUnittest.cpp','KnudsSampleCut.cpp','KnudsSampleSubclassMock.cpp']
 knudsSample1SourcePaths = map(lambda x: 'knuds_samples/sample1/' + x, knudsSample1SourceFiles)
 knudsSample1Objects = getObjects(knudsSample1SourcePaths)
 knudsSample1Program = Program(knudsSample1Objects + googletestObjects + googlemockObjects)
