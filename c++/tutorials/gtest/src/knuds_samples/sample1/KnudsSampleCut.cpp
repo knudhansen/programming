@@ -13,6 +13,6 @@ KnudsSampleCut::~KnudsSampleCut(void) {
 void KnudsSampleCut::method0(void) {
   this->subObject->method0();
 }
-int KnudsSampleCut::method1(int *intPtr) {
-  return this->subObject->method1(intPtr);
+void *KnudsSampleCut::method1(unsigned char *route, int routeLength, int offset) {
+  return this->subObject->method1(route, routeLength, offset);
 }

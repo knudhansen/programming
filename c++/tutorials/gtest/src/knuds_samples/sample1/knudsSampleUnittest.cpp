@@ -8,6 +8,7 @@ TEST(knudsFirstTestcase, knudsFirstTestcase) {
 
   EXPECT_CALL(subObjectMock, method0());
   kscut->method0();
-  int a = 4;
-  kscut->method1(&a);
+
+  unsigned char route[] = {1,2,3};
+  kscut->method1(route, sizeof(route), 0);
 }

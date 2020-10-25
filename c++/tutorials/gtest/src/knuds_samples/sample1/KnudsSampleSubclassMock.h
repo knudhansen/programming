@@ -12,7 +12,7 @@ class KnudsSampleSubclassMock: public KnudsSampleSubclass {
   ~KnudsSampleSubclassMock(void);
 
   MOCK_METHOD(void, method0, ());
-  MOCK_METHOD(int, method1, (int *intPtr));
+  MOCK_METHOD(void*, method1, (unsigned char *route, int routeLength, int offset));
 
 };
 

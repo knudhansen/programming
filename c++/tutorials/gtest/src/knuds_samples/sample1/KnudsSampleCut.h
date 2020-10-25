@@ -13,7 +13,7 @@ class KnudsSampleCut {
   virtual ~KnudsSampleCut(void);
 
   void method0(void);
-  int method1(int *intPtr);
+  void *method1(unsigned char *route, int routeLength, int offset);
 
 };
 
