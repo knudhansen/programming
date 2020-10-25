@@ -14,6 +14,8 @@ class KnudsSampleSubclassMock: public KnudsSampleSubclass {
   MOCK_METHOD(void, method0, ());
   MOCK_METHOD(void*, method1, (unsigned char *route, int routeLength, int offset));
 
+ private:
+  void *_route(unsigned char *route, int routeLength, int offset);
 };
 
 #endif
